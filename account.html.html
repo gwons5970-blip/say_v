@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>say_v</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary: #f472b6;
+            --primary-light: #fce7f3;
+            --primary-dark: #ec4899;
+            --danger: #fb7185;
+            --text-main: #4a3e3d;
+            --text-sub: #8c7a78;
+            --bg: #fff5f7;
+            --card-bg: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .mobile-container {
+            width: 100%;
+            max-width: 480px;
+            background: #fffafa;
+            min-height: calc(100vh - 40px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            box-shadow: 0 0 25px rgba(244, 114, 182, 0.12);
+            border-radius: 24px;
+            padding-bottom: 40px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 12px;
+            border-bottom: 2px dashed #fbcfe8;
+        }
+
+        .logo-group {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        h1 { font-size: 1.4rem; font-weight: 800; color: #db2777; letter-spacing: -0.5px; }
+
+        .nav-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-symbol {
+            background: #fdf2f8;
+            border: 1px solid #fbcfe8;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .btn-symbol:active { transform: scale(0.95); background: #fce7f3; }
+
+        /* 대시보드 카드 */
+        .dashboard-card {
+            background: linear-gradient(135deg, #f472b6, #fb7185);
+            color: white;
+            padding: 22px;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(244, 114, 182, 0.3);
+            position: relative;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .month-nav {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-month-nav {
+            background: rgba(255, 255, 255, 0.25);
+            border: none;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .today-date-text { font-size: 0.95rem; font-weight: 700; margin: 0 4px; }
+        .d-day-badge {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .dashboard-card .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .dashboard-card .label { font-size: 0.85rem; opacity: 0.9; }
+        
+        .btn-edit-budget {
+            background: rgba(255, 255, 255, 0.25);
+            border: none;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .dashboard-card .amount { font-size: 1.9rem; font-weight: 800; margin-bottom: 12px; }
+
+        .progress-bar-bg {
+            background: rgba(255, 255, 255, 0.3);
+            height: 10px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-fill {
+            background: #ffffff;
+            height: 100%;
+            width: 0%;
+            border-radius: 10px;
+            transition: width 0.4s ease;
+        }
+
+        .dashboard-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            opacity: 0.95;
+        }
+
+        .daily-tip-card {
+            background: #fdf2f8;
+            border: 1px solid #fbcfe8;
+            border-radius: 16px;
+            padding: 12px 16px;
+            font-size: 0.85rem;
+            color: #9d174d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .input-card {
+            background: #ffffff;
+            border: 1px solid #fbcfe8;
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 4px 15px rgba(251, 207, 232, 0.2);
+        }
+
+        .input-card h3 { font-size: 0.95rem; color: #831843; margin-bottom: 10px; }
+
+        .form-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        input, select, button.btn-submit, .picker-btn {
+            width: 100%;
+            padding: 11px 14px;
+            border-radius: 12px;
+            border: 1px solid #fbcfe8;
+            font-size: 0.9rem;
+            outline: none;
+            color: var(--text-main);
+            background: #ffffff;
+        }
+
+        .picker-btn {
+            text-align: left;
+            cursor: pointer;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2); }
+
+        .btn-submit {
+            background: linear-gradient(135deg, #f472b6, #ec4899);
+            color: white;
+            border: none;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 4px;
+            box-shadow: 0 4px 12px rgba(236, 72, 153, 0.25);
+        }
+
+        .history-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 12px;
+            color: #831843;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: #ffffff;
+            border: 1px solid #fce7f3;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(244, 114, 182, 0.05);
+        }
+
+        .item-info .title { font-weight: 600; font-size: 0.9rem; color: var(--text-main); }
+        .item-info .meta { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
+        .item-right { text-align: right; }
+        .item-amount { font-weight: 700; color: var(--danger); font-size: 0.95rem; }
+        .btn-action-sm {
+            background: none;
+            border: none;
+            color: #9d174d;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 4px;
+            opacity: 0.7;
+        }
+
+        /* Modal 공통 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(74, 62, 61, 0.4);
+            backdrop-filter: blur(3px);
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 22px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #fbcfe8;
+            box-shadow: 0 20px 40px rgba(244, 114, 182, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-header h3 { font-size: 1.1rem; color: #831843; }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        /* 달력 및 날짜 피커 스타일 (숫자 안보임 현상 해결 버전) */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #831843;
+        }
+
+        .calendar-month-sum {
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--danger);
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .cal-day-head {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #9d174d;
+            padding: 4px 0;
+        }
+
+        .cal-cell {
+            min-height: 64px;
+            background: #fff5f7;
+            border: 1px solid #fce7f3;
+            border-radius: 8px;
+            padding: 4px 2px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            overflow: visible; /* 잘림 현상 방지 완벽 차단 */
+        }
+
+        .cal-cell.selected {
+            border: 2px solid var(--primary);
+            background: var(--primary-light);
+        }
+
+        .cal-cell .num { 
+            font-weight: 600; 
+            width: 100%;
+            text-align: left; 
+            color: var(--text-main); 
+            font-size: 0.75rem; 
+            padding-left: 3px; 
+            margin-bottom: 2px;
+        }
+
+        .cal-cell .sum { 
+            font-size: 0.72rem; 
+            color: var(--danger); 
+            font-weight: 700; 
+            width: 100%;
+            text-align: center;
+            line-height: 1.1;
+            white-space: nowrap;
+            overflow: visible;
+            word-break: normal;
+            margin-top: auto;
+            margin-bottom: 2px;
+            transform-origin: center center;
+        }
+
+        .day-picker-cell-cal {
+            min-height: 44px;
+            background: #fff5f7;
+            border: 1px solid #fce7f3;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+
+        .day-picker-cell-cal:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .day-picker-cell-cal.selected {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary-dark);
+            font-weight: bold;
+        }
+
+        .sub-tab-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            background: #fdf2f8;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .sub-tab-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: #9d174d;
+        }
+
+        .sub-tab-btn.active {
+            background: white;
+            color: var(--primary-dark);
+            box-shadow: 0 2px 6px rgba(244, 114, 182, 0.15);
+        }
+
+        .tag-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .tag-item {
+            background: #fdf2f8;
+            border: 1px solid #fce7f3;
+            padding: 8px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 500;
+        }
+
+
+        /* ===== PC + 모바일 공통 UI 정렬 보정 ===== */
+        html {
+            overflow-x: hidden;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        button, input, select {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button {
+            line-height: 1.2;
+        }
+
+        /* 모든 작은 이동 버튼은 고정된 정사각형으로 만들어
+           화면 크기가 달라도 화살표가 가운데에 오도록 합니다. */
+        .btn-month-nav {
+            width: 32px;
+            min-width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            flex: 0 0 32px;
+        }
+
+        .month-nav {
+            min-width: 0;
+            flex-wrap: nowrap;
+        }
+
+        .today-date-text {
+            white-space: nowrap;
+        }
+
+        /* 기본 select 화살표 위치가 브라우저마다 달라지는 문제 방지 */
+        select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            padding-right: 38px !important;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.2 4.5 6 8.2l3.8-3.7' fill='none' stroke='%236b5a58' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px 12px;
+        }
+
+        /* date 입력창의 브라우저별 아이콘 위치 보정 */
+        input[type="date"] {
+            min-width: 0;
+            padding-right: 12px;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            margin-left: 4px;
+            cursor: pointer;
+        }
+
+        /* 모달 스크롤바를 내용 영역 안에서 얇고 일정하게 표시 */
+        .modal-content {
+            scrollbar-width: thin;
+            scrollbar-color: #a8a0a0 transparent;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 7px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+            border-radius: 10px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #a8a0a0;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background-clip: padding-box;
+        }
+
+        /* 달력 상단 화살표가 양쪽 끝에서 정확히 같은 폭을 차지하도록 */
+        .calendar-header {
+            display: grid;
+            grid-template-columns: 36px minmax(0, 1fr) 36px;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .calendar-header > button {
+            width: 36px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            flex: 0 0 36px;
+        }
+
+        .calendar-header > span {
+            min-width: 0;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* 달력 금액은 JS가 실제 셀 폭을 보고 축소하므로 줄바꿈 금지 */
+        .cal-cell .sum {
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: clip;
+            white-space: nowrap;
+        }
+
+        /* 좁은 휴대폰에서도 버튼/입력창이 화면 밖으로 밀리지 않도록 */
+        @media (max-width: 520px) {
+            body {
+                padding: 0;
+                min-width: 0;
+            }
+
+            .mobile-container {
+                width: 100%;
+                max-width: 480px;
+                min-height: 100vh;
+                border-radius: 0 0 24px 24px;
+                padding: 16px;
+                padding-bottom: 32px;
+                gap: 16px;
+            }
+
+            header {
+                gap: 8px;
+            }
+
+            .nav-buttons {
+                gap: 4px;
+                flex-shrink: 0;
+            }
+
+            .btn-symbol {
+                width: 34px;
+                height: 34px;
+                flex: 0 0 34px;
+            }
+
+            .dashboard-card {
+                padding: 18px;
+            }
+
+            .dashboard-header {
+                gap: 8px;
+            }
+
+            .d-day-badge {
+                flex: 0 0 auto;
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .form-row {
+                min-width: 0;
+            }
+
+            .form-row > * {
+                min-width: 0;
+            }
+
+            .modal {
+                padding: 10px;
+            }
+
+            .modal-content {
+                width: 100%;
+                max-width: 480px;
+                max-height: calc(100vh - 20px);
+                padding: 18px;
+                border-radius: 20px;
+            }
+
+            .calendar-grid {
+                gap: 3px;
+            }
+
+            .cal-cell {
+                min-height: 58px;
+                padding-left: 2px;
+                padding-right: 2px;
+            }
+        }
+
+        @media (max-width: 370px) {
+            .mobile-container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .nav-buttons {
+                gap: 3px;
+            }
+
+            .btn-symbol {
+                width: 31px;
+                height: 31px;
+                flex-basis: 31px;
+                font-size: 0.85rem;
+            }
+
+            .dashboard-card {
+                padding: 16px;
+            }
+
+            .today-date-text {
+                font-size: 0.88rem;
+            }
+
+            .btn-month-nav {
+                width: 30px;
+                min-width: 30px;
+                flex-basis: 30px;
+            }
+        }
+
+        .color-picker-input {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            padding: 0;
+            background: none;
+        }
+
+        .color-picker-input::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker-input::-webkit-color-swatch { border: 1px solid rgba(0,0,0,0.15); border-radius: 50%; }
+
+        .tag-item button {
+            background: none;
+            border: none;
+            color: #f472b6;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .fixed-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: #fff5f7;
+            border: 1px solid #fce7f3;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+        }
+
+        #summaryImageCard {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 20px;
+            border: 1px solid #fbcfe8;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* ===== 최종 UI 정렬 보정 : PC + 모바일 ===== */
+        /* 아이콘형 이동 버튼과 글자형 '오늘' 버튼을 분리해 폭이 찌그러지지 않게 합니다. */
+        .btn-month-nav {
+            width: 32px;
+            min-width: 32px;
+            max-width: 32px;
+            height: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 32px;
+            line-height: 1;
+            white-space: nowrap;
+        }
+
+        #btnResetMonth,
+        #btnResetDay {
+            width: auto;
+            min-width: 58px;
+            max-width: none;
+            padding: 0 10px;
+            flex: 0 0 auto;
+        }
+
+        .dashboard-header {
+            min-width: 0;
+        }
+
+        .month-nav {
+            display: grid;
+            grid-template-columns: 32px minmax(0, auto) 32px auto;
+            align-items: center;
+            gap: 5px;
+            min-width: 0;
+        }
+
+        .month-nav .today-date-text {
+            min-width: 0;
+            white-space: nowrap;
+            text-align: center;
+            margin: 0;
+        }
+
+        .dashboard-header > .d-day-badge {
+            flex: 0 0 auto;
+            white-space: nowrap;
+        }
+
+        /* 지출 입력창의 날짜 이동 버튼도 항상 같은 기준선에 맞춥니다. */
+        .input-card > div:first-child {
+            min-width: 0;
+            gap: 8px;
+        }
+
+        .input-card > div:first-child > h3 {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .input-card > div:first-child > div {
+            display: flex !important;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px !important;
+            flex: 0 0 auto;
+        }
+
+        /* select 기본 화살표를 없애고 앱에서 만든 화살표 하나만 사용 */
+        select {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+            background-size: 12px 12px !important;
+            padding-right: 38px !important;
+        }
+
+        /* 날짜 입력창의 캘린더 아이콘이 글자와 겹치지 않게 */
+        input[type="date"] {
+            min-width: 0;
+            padding-right: 10px !important;
+        }
+
+        /* 모달 스크롤바가 오른쪽에 떠 보이지 않도록 별도 공간 예약을 하지 않습니다. */
+        .modal {
+            overflow: hidden;
+        }
+
+        .modal-content {
+            width: min(440px, calc(100vw - 32px));
+            max-height: min(90vh, 760px);
+            overflow-x: hidden;
+            overflow-y: auto;
+            scrollbar-gutter: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(100, 90, 90, 0.55);
+            border: 0;
+            border-radius: 999px;
+        }
+
+        /* 달력 상단은 항상 [왼쪽 화살표][가운데 제목][오른쪽 화살표] 구조 */
+        .calendar-header {
+            display: grid !important;
+            grid-template-columns: 36px minmax(0, 1fr) 36px !important;
+            align-items: center !important;
+            gap: 4px !important;
+            width: 100%;
+        }
+
+        .calendar-header > button {
+            width: 36px !important;
+            min-width: 36px !important;
+            max-width: 36px !important;
+            height: 32px !important;
+            padding: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin: 0 !important;
+            line-height: 1 !important;
+        }
+
+        .calendar-header > span {
+            min-width: 0;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        /* 달력 날짜 칸과 금액도 절대로 가로로 튀어나가지 않게 */
+        .calendar-grid,
+        .cal-cell {
+            min-width: 0;
+        }
+
+        .cal-cell .sum {
+            max-width: 100%;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: clip;
+        }
+
+        @media (max-width: 520px) {
+            body {
+                overflow-x: hidden;
+            }
+
+            .mobile-container {
+                width: 100%;
+                max-width: 480px;
+                padding-left: 16px;
+                padding-right: 16px;
+                overflow-x: hidden;
+            }
+
+            .dashboard-header {
+                gap: 6px;
+            }
+
+            .month-nav {
+                grid-template-columns: 30px minmax(0, 1fr) 30px auto;
+                gap: 4px;
+                flex: 1 1 auto;
+                min-width: 0;
+            }
+
+            .month-nav .btn-month-nav:not(#btnResetMonth) {
+                width: 30px;
+                min-width: 30px;
+                max-width: 30px;
+                flex-basis: 30px;
+            }
+
+            #btnResetMonth {
+                min-width: 54px;
+                padding: 0 8px;
+                font-size: 0.78rem;
+            }
+
+            .today-date-text {
+                font-size: 0.9rem;
+            }
+
+            .dashboard-header > .d-day-badge {
+                padding-left: 8px;
+                padding-right: 8px;
+                font-size: 0.68rem;
+            }
+
+            .input-card > div:first-child > div {
+                gap: 4px !important;
+            }
+
+            #btnResetDay {
+                min-width: 54px;
+                padding: 0 8px;
+                font-size: 0.78rem;
+            }
+
+            .modal {
+                padding: 10px;
+            }
+
+            .modal-content {
+                width: calc(100vw - 20px);
+                max-width: 440px;
+                max-height: calc(100vh - 20px);
+                padding: 18px;
+                border-radius: 20px;
+            }
+        }
+
+        @media (max-width: 370px) {
+            .mobile-container {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .month-nav {
+                grid-template-columns: 28px minmax(0, 1fr) 28px auto;
+                gap: 3px;
+            }
+
+            .month-nav .btn-month-nav:not(#btnResetMonth) {
+                width: 28px;
+                min-width: 28px;
+                max-width: 28px;
+                flex-basis: 28px;
+            }
+
+            #btnResetMonth,
+            #btnResetDay {
+                min-width: 50px;
+                padding: 0 6px;
+                font-size: 0.72rem;
+            }
+
+            .today-date-text {
+                font-size: 0.84rem;
+            }
+
+            .dashboard-header > .d-day-badge {
+                padding-left: 6px;
+                padding-right: 6px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="mobile-container">
+    <header>
+        <div class="logo-group">
+            <h1>say_v</h1>
+        </div>
+        <div class="nav-buttons">
+            <button class="btn-symbol" onclick="openModal('downloadModal')" title="내역 다운로드">📥</button>
+            <button class="btn-symbol" onclick="openModal('calendarModal')" title="지출 달력">📅</button>
+            <button class="btn-symbol" onclick="openModal('statsModal')" title="지출 분석">📊</button>
+            <button class="btn-symbol" onclick="openModal('budgetModal')" title="설정">⚙️</button>
+        </div>
+    </header>
+
+    <!-- 메인 대시보드 카드 -->
+    <div class="dashboard-card">
+        <div class="dashboard-header">
+            <div class="month-nav">
+                <button class="btn-month-nav" onclick="changeDashboardMonth(-1)">◀</button>
+                <span class="today-date-text" id="dashboardTodayDate">2026년 0월</span>
+                <button class="btn-month-nav" id="btnNextMonth" onclick="changeDashboardMonth(1)" style="display:none;">▶</button>
+                <button class="btn-month-nav" id="btnResetMonth" onclick="resetDashboardMonth()" title="오늘로 돌아오기" style="display:none; background:rgba(255,255,255,0.4);">↺ 오늘</button>
+            </div>
+            <span class="d-day-badge" id="dashboardDDay">D-0</span>
+        </div>
+        <div class="label-row">
+            <span class="label" id="budgetLabel">이번 달 남은 생활비</span>
+            <button class="btn-edit-budget" onclick="openCustomBudgetPrompt()">✏️ 생활비 변경</button>
+        </div>
+        <div class="amount" id="remainingBudget">0원</div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+        <div class="dashboard-info">
+            <span>목표 생활비: <strong id="totalBudget">0원</strong></span>
+            <span>사용: <strong id="totalSpent">0원</strong></span>
+        </div>
+    </div>
+
+    <!-- 하루 권장 지출 안내 -->
+    <div class="daily-tip-card">
+        <span>💡 하루 권장 지출액</span>
+        <strong id="dailyRecommended">0원</strong>
+    </div>
+
+    <!-- 지출 기록하기 -->
+    <div class="input-card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">✍️ 오늘 지출 기록하기</h3>
+            <div style="display: flex; gap: 4px;">
+                <button class="btn-month-nav" style="background:#fce7f3; color:#9d174d;" onclick="stepPreviousDay()">◀</button>
+                <button class="btn-month-nav" id="btnNextDay" style="background:#fce7f3; color:#9d174d; display:none;" onclick="stepNextDay()">▶</button>
+                <button class="btn-month-nav" id="btnResetDay" style="background:#ec4899; color:white; display:none;" onclick="resetToTodayDate()">↺ 오늘</button>
+            </div>
+        </div>
+        <div class="form-row">
+            <input type="date" id="itemDate" style="flex: 1.2;">
+            <select id="itemCategory" style="flex: 1;"></select>
+        </div>
+        <div class="form-row">
+            <input type="text" id="itemTitle" placeholder="사용처 (예: 디저트)" style="flex: 1.5;">
+            <input type="number" id="itemAmount" step="1000" placeholder="금액" style="flex: 1;" onkeydown="if(event.key==='Enter') addExpense()">
+        </div>
+        <button class="btn-submit" onclick="addExpense()">지출 추가하기</button>
+    </div>
+
+    <!-- 내역 표시 -->
+    <div class="history-section">
+        <h3><span id="historyListTitle">지출 내역</span> <span id="todayTotalCount" style="font-size: 0.8rem; color: var(--text-sub); font-weight: normal;">(0건)</span></h3>
+        <ul class="history-list" id="todayHistoryList"></ul>
+    </div>
+</div>
+
+<!-- 1. 📥 내역 다운로드 모달 -->
+<div class="modal" id="downloadModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📥 지출 내역 다운로드</h3>
+            <button class="btn-close" onclick="closeModal('downloadModal')">✕</button>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <label style="font-size:0.85rem; font-weight:bold; color:#831843;">시작 날짜</label>
+            <input type="date" id="dlStartDate" style="margin-top:4px;">
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="font-size:0.85rem; font-weight:bold; color:#831843;">종료 날짜</label>
+            <input type="date" id="dlEndDate" style="margin-top:4px;">
+        </div>
+
+        <button class="btn-submit" onclick="downloadCSV()" style="margin-bottom: 8px;">📊 CSV 파일로 다운로드</button>
+        <button class="btn-submit" onclick="downloadImageCard()" style="background: linear-gradient(135deg, #f472b6, #e11d48);">🖼️ 요약 이미지 카드 저장</button>
+
+        <div id="summaryImageCard">
+            <h3 style="font-size:1.1rem; color:#db2777; border-bottom:2px solid #fbcfe8; padding-bottom:8px;" id="cardTitle">💸 say_v 지출 리포트</h3>
+            <p style="font-size:0.8rem; color:var(--text-sub);" id="cardPeriod">기간: 2026.00.00 ~ 2026.00.00</p>
+            
+            <div style="background:#fff5f7; padding:12px; border-radius:12px; margin: 4px 0;">
+                <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
+                    <span>총 지출 건수</span>
+                    <strong id="cardCount">0건</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:1rem; font-weight:bold; color:var(--danger);">
+                    <span>총 사용 금액</span>
+                    <strong id="cardTotal">0원</strong>
+                </div>
+            </div>
+
+            <div style="font-size:0.85rem; font-weight:bold; margin-top:4px; color:#831843;">상세 내역</div>
+            <ul id="cardHistoryList" style="list-style:none; display:flex; flex-direction:column; gap:6px; max-height:250px; overflow:hidden;"></ul>
+        </div>
+    </div>
+</div>
+
+<!-- 2. ⚙️ 설정 모달 -->
+<div class="modal" id="budgetModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>⚙️ 설정</h3>
+            <button class="btn-close" onclick="closeModal('budgetModal')">✕</button>
+        </div>
+        
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">월 생활비 목표 (예: 400000)</p>
+        <div class="form-row" style="margin-bottom: 16px;">
+            <input type="number" id="newBudgetInput" step="1000" placeholder="예: 400000" onkeydown="if(event.key==='Enter') saveBudget()">
+            <button class="btn-submit" onclick="saveBudget()" style="width: 80px; margin: 0;">저장</button>
+        </div>
+
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; color:#831843;">카테고리 지출 포함 여부 및 색상 설정</p>
+        <div class="tag-list" id="categoryTagList"></div>
+        <div class="form-row" style="margin-bottom: 16px;">
+            <input type="text" id="newCategoryInput" placeholder="새 항목 추가" onkeydown="if(event.key==='Enter') addCategory()">
+            <button class="btn-submit" onclick="addCategory()" style="width: 80px; margin: 0;">추가</button>
+        </div>
+
+        <hr style="border:0; border-top:1px dashed #fbcfe8; margin: 12px 0;">
+
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">고정 지출 설정 (미리 차감될 항목)</p>
+        <div id="fixedExpenseList" style="margin-bottom: 8px;"></div>
+        
+        <div class="form-row">
+            <select id="fixedCategory" style="flex: 1;"></select>
+            <input type="text" id="fixedTitle" placeholder="항목 (예: 폰요금)" style="flex: 1.2;">
+        </div>
+        <div class="form-row" style="margin-bottom: 8px;">
+            <div class="picker-btn" id="fixedDayBtn" onclick="openDayPickerModal()" style="flex: 1;">
+                <span id="fixedDayBtnText">날짜 선택</span> 📅
+            </div>
+            <input type="hidden" id="fixedDay" value="">
+            <input type="number" id="fixedAmount" step="1000" placeholder="금액" style="flex: 1.2;">
+        </div>
+        <div class="form-row" style="margin-bottom: 8px;">
+            <button class="picker-btn" id="fixedInclusionBtn" onclick="toggleFixedInclusionState()" style="flex: 1; justify-content: center; background:#fce7f3; color:#db2777; font-weight:bold;">
+                🟢 지출 포함
+            </button>
+            <button class="btn-submit" onclick="addFixedExpense()" style="width: 80px; margin: 0;">등록</button>
+        </div>
+        <button class="btn-submit" onclick="applyFixedExpensesToCurrentMonth(true)" style="background: linear-gradient(135deg, #f472b6, #fb7185); margin-top:6px;">이번 달 고정지출 반영하기</button>
+    </div>
+</div>
+
+<!-- 2-1. 📅 고정지출 날짜 선택 모달 -->
+<div class="modal" id="dayPickerModal" style="z-index: 1100;">
+    <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-header">
+            <h3>📅 날짜 선택</h3>
+            <button class="btn-close" onclick="closeModal('dayPickerModal')">✕</button>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-sub); margin-bottom: 12px;">
+            매월 지출될 날짜를 선택하세요.
+        </p>
+        <div class="calendar-grid" style="margin-bottom: 6px;">
+            <div class="cal-day-head" style="color:#fb7185;">일</div>
+            <div class="cal-day-head">월</div>
+            <div class="cal-day-head">화</div>
+            <div class="cal-day-head">수</div>
+            <div class="cal-day-head">목</div>
+            <div class="cal-day-head">금</div>
+            <div class="cal-day-head" style="color:#f472b6;">토</div>
+        </div>
+        <div class="calendar-grid" id="dayPickerGrid" style="margin-bottom: 0;"></div>
+    </div>
+</div>
+
+<!-- 2-2. ✏️ 고정지출 수정 모달 -->
+<div class="modal" id="editFixedModal" style="z-index: 1150;">
+    <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-header">
+            <h3>✏️ 고정 지출 수정</h3>
+            <button class="btn-close" onclick="closeModal('editFixedModal')">✕</button>
+        </div>
+        <input type="hidden" id="editFixedIndex">
+        <div class="form-row" style="margin-bottom: 8px;">
+            <select id="editFixedCategory" style="flex: 1;"></select>
+            <input type="text" id="editFixedTitle" placeholder="항목" style="flex: 1.2;">
+        </div>
+        <div class="form-row" style="margin-bottom: 8px;">
+            <div class="picker-btn" id="editFixedDayBtn" onclick="openEditDayPickerModal()" style="flex: 1;">
+                <span id="editFixedDayBtnText">날짜 선택</span> 📅
+            </div>
+            <input type="hidden" id="editFixedDay" value="">
+            <input type="number" id="editFixedAmount" step="1000" placeholder="금액" style="flex: 1.2;">
+        </div>
+        <button class="btn-submit" onclick="saveEditedFixedExpense()">수정 완료</button>
+    </div>
+</div>
+
+<!-- 2-3. 📅 고정지출 수정용 날짜 선택 모달 -->
+<div class="modal" id="editDayPickerModal" style="z-index: 1200;">
+    <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-header">
+            <h3>📅 날짜 선택 (수정)</h3>
+            <button class="btn-close" onclick="closeModal('editDayPickerModal')">✕</button>
+        </div>
+        <div class="calendar-grid" style="margin-bottom: 6px;">
+            <div class="cal-day-head" style="color:#fb7185;">일</div>
+            <div class="cal-day-head">월</div>
+            <div class="cal-day-head">화</div>
+            <div class="cal-day-head">수</div>
+            <div class="cal-day-head">목</div>
+            <div class="cal-day-head">금</div>
+            <div class="cal-day-head" style="color:#f472b6;">토</div>
+        </div>
+        <div class="calendar-grid" id="editDayPickerGrid" style="margin-bottom: 0;"></div>
+    </div>
+</div>
+
+<!-- 3. 📅 지출 달력 모달 -->
+<div class="modal" id="calendarModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📅 지출 달력</h3>
+            <button class="btn-close" onclick="closeModal('calendarModal')">✕</button>
+        </div>
+
+        <div class="calendar-header">
+            <button onclick="changeCalMonth(-1)" style="border:none; background:none; cursor:pointer; font-size:1.1rem; color:#9d174d; font-weight:bold;">◀</button>
+            <span id="calMonthTitle" style="font-size:1.05rem;">2026년 9월</span>
+            <button id="btnCalNextMonth" onclick="changeCalMonth(1)" style="border:none; background:none; cursor:pointer; font-size:1.1rem; color:#9d174d; font-weight:bold; visibility:hidden;">▶</button>
+        </div>
+
+        <div class="calendar-month-sum" id="calMonthTotalSum">
+            월 총 지출: -0원
+        </div>
+
+        <div class="calendar-grid">
+            <div class="cal-day-head" style="color:#fb7185;">일</div>
+            <div class="cal-day-head">월</div>
+            <div class="cal-day-head">화</div>
+            <div class="cal-day-head">수</div>
+            <div class="cal-day-head">목</div>
+            <div class="cal-day-head">금</div>
+            <div class="cal-day-head" style="color:#f472b6;">토</div>
+        </div>
+
+        <div class="calendar-grid" id="calendarCells"></div>
+
+        <hr style="border:0; border-top:1px dashed #fbcfe8; margin: 12px 0;">
+        <h4 id="selectedDateTitle" style="font-size:0.9rem; margin-bottom:8px; color:#831843;">날짜를 클릭하세요</h4>
+        <ul class="history-list" id="calDateHistoryList"></ul>
+    </div>
+</div>
+
+<!-- 4. 📊 지출 분석 모달 -->
+<div class="modal" id="statsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>📊 지출 분석</h3>
+            <button class="btn-close" onclick="closeModal('statsModal')">✕</button>
+        </div>
+
+        <div class="sub-tab-group">
+            <button class="sub-tab-btn" id="btnFilterDay" onclick="setStatsFilter('day')">일간</button>
+            <button class="sub-tab-btn" id="btnFilterWeek" onclick="setStatsFilter('week')">주간</button>
+            <button class="sub-tab-btn active" id="btnFilterMonth" onclick="setStatsFilter('month')">월</button>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <canvas id="periodChart"></canvas>
+        </div>
+        
+        <hr style="border:0; border-top:1px dashed #fbcfe8; margin: 16px 0;">
+
+        <div>
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 5. ✏️ 수정 모달 -->
+<div class="modal" id="editExpenseModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>✏️ 지출 내역 수정</h3>
+            <button class="btn-close" onclick="closeModal('editExpenseModal')">✕</button>
+        </div>
+        <div class="form-row">
+            <input type="date" id="editItemDate" style="flex: 1.2;">
+            <select id="editItemCategory" style="flex: 1;"></select>
+        </div>
+        <div class="form-row">
+            <input type="text" id="editItemTitle" placeholder="사용처" style="flex: 1.5;">
+            <input type="number" id="editItemAmount" step="1000" placeholder="금액" style="flex: 1;" onkeydown="if(event.key==='Enter') saveEditedExpense()">
+        </div>
+        <button class="btn-submit" onclick="saveEditedExpense()">수정 완료</button>
+    </div>
+</div>
+
+<script>
+    let defaultMonthlyBudget = localStorage.getItem('monthlyBudget') ? parseInt(localStorage.getItem('monthlyBudget')) : 400000;
+    let customMonthlyBudgets = localStorage.getItem('customMonthlyBudgets') ? JSON.parse(localStorage.getItem('customMonthlyBudgets')) : {};
+    let expenses = localStorage.getItem('expenses') ? JSON.parse(localStorage.getItem('expenses')) : [];
+    let fixedExpenses = localStorage.getItem('fixedExpenses') ? JSON.parse(localStorage.getItem('fixedExpenses')) : [];
+    
+    let categories = localStorage.getItem('categories') ? JSON.parse(localStorage.getItem('categories')) : 
+        ['🍰 식비', '🛒 생필품', '☕ 카페', '🚌 교통', '🛍️ 쇼핑', '🎬 문화', '✨ 기타', '🏠 고정비'];
+
+    const defaultPalette = ['#f472b6', '#fb7185', '#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e', '#9ca3af', '#fb923c', '#4ade80'];
+    let categoryColors = localStorage.getItem('categoryColors') ? JSON.parse(localStorage.getItem('categoryColors')) : {};
+    let categoryBudgetInclusions = localStorage.getItem('categoryBudgetInclusions') ? JSON.parse(localStorage.getItem('categoryBudgetInclusions')) : {};
+
+    categories.forEach((cat, idx) => {
+        if (!categoryColors[cat]) {
+            categoryColors[cat] = defaultPalette[idx % defaultPalette.length];
+        }
+        if (categoryBudgetInclusions[cat] === undefined) {
+            categoryBudgetInclusions[cat] = true;
+        }
+    });
+
+    let dashboardDate = new Date(); 
+    let currentCalDate = new Date();
+    let statsFilter = 'month'; 
+    let editingExpenseIndex = -1;
+    let selectedFixedDay = null;
+    let selectedEditFixedDay = null;
+    let fixedInclusionState = true; 
+
+    let periodChartInstance = null;
+    let categoryChartInstance = null;
+
+    function init() {
+        migrateExpenseData();
+        const todayStr = getTodayYMD();
+        document.getElementById('itemDate').value = todayStr;
+
+        const monthFirstDay = `${dashboardDate.getFullYear()}-${String(dashboardDate.getMonth() + 1).padStart(2, '0')}-01`;
+        document.getElementById('dlStartDate').value = monthFirstDay;
+        document.getElementById('dlEndDate').value = todayStr;
+
+        renderCategoryOptions();
+        renderFixedExpenses();
+        renderDayPickerGrid();
+        renderEditDayPickerGrid();
+        
+        updateUI();
+    }
+
+    function getTodayYMD() {
+        return formatDateYMD(new Date());
+    }
+
+    function generateId() {
+        return `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    // 기존 데이터도 새 지출 구조에 맞게 한 번만 보정합니다.
+    function migrateExpenseData() {
+        let changed = false;
+        fixedExpenses.forEach(item => {
+            if (!item.id) { item.id = generateId(); changed = true; }
+        });
+
+        expenses.forEach(exp => {
+            if (!exp.id) { exp.id = generateId(); changed = true; }
+            if (!exp.source) { exp.source = 'normal'; changed = true; }
+        });
+
+        // 예전에 '이번 달 지출에 반영'으로 만들어진 고정지출은 가능한 범위에서 연결합니다.
+        expenses.forEach(exp => {
+            if (exp.source !== 'normal' || exp.fixedExpenseId) return;
+            const match = fixedExpenses.find(item =>
+                item.category === exp.category &&
+                item.title === exp.title &&
+                Number(item.amount) === Number(exp.amount)
+            );
+            if (match) {
+                exp.source = 'fixed';
+                exp.fixedExpenseId = match.id;
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+    }
+
+    function isExpenseIncluded(expense) {
+        if (categoryBudgetInclusions[expense.category] === false) return false;
+        if (expense.source === 'fixed' && expense.fixedIncluded === false) return false;
+        return true;
+    }
+
+    function getIncludedExpenses(list = expenses) {
+        return list.filter(isExpenseIncluded);
+    }
+
+    function fitCalendarAmountText(element) {
+        if (!element || !element.textContent) return;
+        const maxFont = 0.72;
+        const minFont = 0.43;
+        let size = maxFont;
+        element.style.fontSize = `${size}rem`;
+        while (size > minFont && element.scrollWidth > element.clientWidth) {
+            size -= 0.03;
+            element.style.fontSize = `${size.toFixed(2)}rem`;
+        }
+    }
+
+    function formatDateYMD(d) {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getDashboardYearMonth() {
+        return `${dashboardDate.getFullYear()}-${String(dashboardDate.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function getCurrentBudget() {
+        const currentYM = getDashboardYearMonth();
+        return customMonthlyBudgets[currentYM] ? customMonthlyBudgets[currentYM] : defaultMonthlyBudget;
+    }
+
+    function getTotalFixedExpensesAmount() {
+        return fixedExpenses
+            .filter(item => item.includeInBudget !== false)
+            .reduce((sum, item) => sum + item.amount, 0);
+    }
+
+    function changeDashboardMonth(delta) {
+        const now = new Date();
+        const nextDate = new Date(dashboardDate.getFullYear(), dashboardDate.getMonth() + delta, 1);
+        
+        if (nextDate.getFullYear() > now.getFullYear() || 
+           (nextDate.getFullYear() === now.getFullYear() && nextDate.getMonth() > now.getMonth())) {
+            return;
+        }
+
+        dashboardDate = nextDate;
+        updateUI();
+    }
+
+    function resetDashboardMonth() {
+        dashboardDate = new Date();
+        document.getElementById('itemDate').value = getTodayYMD();
+        updateUI();
+    }
+
+    function stepPreviousDay() {
+        const currentDateInput = document.getElementById('itemDate').value;
+        let baseDate = currentDateInput ? new Date(currentDateInput) : new Date();
+        
+        baseDate.setDate(baseDate.getDate() - 1);
+        const newDateStr = formatDateYMD(baseDate);
+        document.getElementById('itemDate').value = newDateStr;
+
+        syncDashboardToDate(baseDate);
+    }
+
+    function stepNextDay() {
+        const currentDateInput = document.getElementById('itemDate').value;
+        let baseDate = currentDateInput ? new Date(currentDateInput) : new Date();
+        const now = new Date();
+        
+        baseDate.setDate(baseDate.getDate() + 1);
+        
+        if (baseDate > now && formatDateYMD(baseDate) !== formatDateYMD(now)) {
+            return;
+        }
+
+        const newDateStr = formatDateYMD(baseDate);
+        document.getElementById('itemDate').value = newDateStr;
+
+        syncDashboardToDate(baseDate);
+    }
+
+    function syncDashboardToDate(targetDateObj) {
+        dashboardDate = new Date(targetDateObj.getFullYear(), targetDateObj.getMonth(), 1);
+        updateUI();
+    }
+
+    function resetToTodayDate() {
+        document.getElementById('itemDate').value = getTodayYMD();
+        dashboardDate = new Date();
+        updateUI();
+    }
+
+    function renderCategoryOptions() {
+        const selects = [
+            document.getElementById('itemCategory'), 
+            document.getElementById('editItemCategory'), 
+            document.getElementById('fixedCategory'),
+            document.getElementById('editFixedCategory')
+        ];
+        selects.forEach(select => {
+            if(!select) return;
+            select.innerHTML = '';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.innerText = cat;
+                select.appendChild(opt);
+            });
+        });
+
+        const tagList = document.getElementById('categoryTagList');
+        tagList.innerHTML = '';
+        categories.forEach((cat, idx) => {
+            const currentColor = categoryColors[cat] || defaultPalette[idx % defaultPalette.length];
+            const isInclusion = categoryBudgetInclusions[cat] !== false;
+
+            const div = document.createElement('div');
+            div.className = 'tag-item';
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <input type="color" class="color-picker-input" value="${currentColor}" onchange="changeCategoryColor('${cat}', this.value)" title="색상 변경">
+                    <span>${cat}</span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button onclick="toggleBudgetInclusion('${cat}')" style="background:${isInclusion ? '#fce7f3' : '#f3f4f6'}; color:${isInclusion ? '#db2777' : '#9ca3af'}; padding:3px 8px; border-radius:8px; font-size:0.75rem; font-weight:bold;">
+                        ${isInclusion ? '🟢 지출 포함' : '⚪ 지출 제외'}
+                    </button>
+                    <button onclick="removeCategory(${idx})">✕</button>
+                </div>
+            `;
+            tagList.appendChild(div);
+        });
+    }
+
+    function changeCategoryColor(category, newColor) {
+        categoryColors[category] = newColor;
+        localStorage.setItem('categoryColors', JSON.stringify(categoryColors));
+    }
+
+    function toggleBudgetInclusion(category) {
+        const current = categoryBudgetInclusions[category] !== false;
+        categoryBudgetInclusions[category] = !current;
+        localStorage.setItem('categoryBudgetInclusions', JSON.stringify(categoryBudgetInclusions));
+        renderCategoryOptions();
+        updateUI();
+        if (document.getElementById('calendarModal').style.display === 'flex') {
+            renderCalendar();
+            const selectedTitle = document.getElementById('selectedDateTitle').innerText;
+            const selectedDate = selectedTitle.match(/\d{4}-\d{2}-\d{2}/)?.[0];
+            if (selectedDate) selectCalDate(selectedDate);
+        }
+    }
+
+    function addCategory() {
+        const input = document.getElementById('newCategoryInput');
+        const name = input.value.trim();
+        if (name && !categories.includes(name)) {
+            categories.push(name);
+            categoryColors[name] = defaultPalette[categories.length % defaultPalette.length];
+            categoryBudgetInclusions[name] = true;
+            localStorage.setItem('categories', JSON.stringify(categories));
+            localStorage.setItem('categoryColors', JSON.stringify(categoryColors));
+            localStorage.setItem('categoryBudgetInclusions', JSON.stringify(categoryBudgetInclusions));
+            input.value = '';
+            renderCategoryOptions();
+        }
+    }
+
+    function removeCategory(idx) {
+        if (categories.length <= 1) {
+            alert('최소 하나 이상의 카테고리가 필요합니다.');
+            return;
+        }
+        const removedCat = categories[idx];
+        categories.splice(idx, 1);
+        delete categoryColors[removedCat];
+        delete categoryBudgetInclusions[removedCat];
+
+        localStorage.setItem('categories', JSON.stringify(categories));
+        localStorage.setItem('categoryColors', JSON.stringify(categoryColors));
+        localStorage.setItem('categoryBudgetInclusions', JSON.stringify(categoryBudgetInclusions));
+        renderCategoryOptions();
+    }
+
+    function updateUI() {
+        const now = new Date();
+        const currentYMStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const targetYM = getDashboardYearMonth();
+        const isCurrentMonth = (targetYM === currentYMStr);
+
+        document.getElementById('dashboardTodayDate').innerText = `${dashboardDate.getFullYear()}년 ${dashboardDate.getMonth() + 1}월`;
+
+        const btnNext = document.getElementById('btnNextMonth');
+        const btnReset = document.getElementById('btnResetMonth');
+        if (isCurrentMonth) {
+            btnNext.style.display = 'none';
+            btnReset.style.display = 'none';
+        } else {
+            btnNext.style.display = 'inline-block';
+            btnReset.style.display = 'inline-block';
+        }
+
+        const baseBudget = getCurrentBudget();
+        // 고정지출도 실제 expenses에 기록되는 순간 일반 지출과 동일하게 계산합니다.
+        // 여기서 미리 차감하면 실제 지출과 이중 차감되므로 생활비 목표 자체는 그대로 둡니다.
+        const effectiveBudget = baseBudget;
+
+        const lastDay = new Date(dashboardDate.getFullYear(), dashboardDate.getMonth() + 1, 0).getDate();
+        
+        if (isCurrentMonth) {
+            const todayNum = new Date().getDate();
+            document.getElementById('dashboardDDay').innerText = (lastDay - todayNum) === 0 ? 'D-DAY' : `D-${lastDay - todayNum}`;
+            document.getElementById('budgetLabel').innerText = '이번 달 남은 생활비';
+        } else {
+            document.getElementById('dashboardDDay').innerText = '지난 달';
+            document.getElementById('budgetLabel').innerText = '해당 월 남은 생활비';
+        }
+
+        const monthExpenses = expenses.filter(e => e.date.startsWith(targetYM));
+        
+        // [수정 완료] 전체 지출 합산 (표시용) - 토글이 꺼진 항목도 포함해서 보여줄지 여부 결정
+        // 사용자가 토글을 껐을 때 '월 총 지출' 및 '남은 생활비'에서 완전히 제외되도록 통일 처리합니다.
+        const budgetIncludedMonthExpenses = getIncludedExpenses(monthExpenses);
+        const totalSpent = budgetIncludedMonthExpenses.reduce((sum, item) => sum + item.amount, 0);
+        const budgetIncludedSpent = totalSpent;
+
+        const remaining = effectiveBudget - budgetIncludedSpent;
+        const spentPercent = effectiveBudget > 0 ? Math.min(Math.max((budgetIncludedSpent / effectiveBudget) * 100, 0), 100) : 0;
+
+        document.getElementById('totalBudget').innerText = effectiveBudget.toLocaleString() + '원';
+        document.getElementById('totalSpent').innerText = totalSpent.toLocaleString() + '원';
+        document.getElementById('remainingBudget').innerText = remaining.toLocaleString() + '원';
+        document.getElementById('progressBar').style.width = spentPercent + '%';
+
+        const remainingDaysCalc = isCurrentMonth ? (lastDay - new Date().getDate() + 1) : lastDay;
+        const dailyRec = remaining > 0 ? Math.floor(remaining / remainingDaysCalc) : 0;
+        document.getElementById('dailyRecommended').innerText = dailyRec.toLocaleString() + '원 / 일';
+
+        const selectedInputDate = document.getElementById('itemDate').value || getTodayYMD();
+        const btnNextDay = document.getElementById('btnNextDay');
+        const btnResetDay = document.getElementById('btnResetDay');
+        
+        if (selectedInputDate === getTodayYMD()) {
+            btnNextDay.style.display = 'none';
+            btnResetDay.style.display = 'none';
+        } else {
+            btnNextDay.style.display = 'inline-block';
+            btnResetDay.style.display = 'inline-block';
+        }
+
+        let filteredListExpenses = expenses.map((item, index) => ({...item, originalIndex: index}))
+                                           .filter(e => e.date === selectedInputDate);
+
+        document.getElementById('historyListTitle').innerText = `${selectedInputDate} 지출 내역`;
+        document.getElementById('todayTotalCount').innerText = `(${filteredListExpenses.length}건)`;
+        const todayList = document.getElementById('todayHistoryList');
+        todayList.innerHTML = '';
+
+        if (filteredListExpenses.length === 0) {
+            todayList.innerHTML = `<li style="text-align: center; color: #b4a0a0; padding: 20px 0;">기록된 지출이 없습니다 ✨</li>`;
+        } else {
+            filteredListExpenses.forEach((item) => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <div class="item-info">
+                        <div class="title">[${item.category}] ${item.title}</div>
+                        <div class="meta">${item.date}</div>
+                    </div>
+                    <div class="item-right">
+                        <div class="item-amount">-${item.amount.toLocaleString()}원</div>
+                        <div>
+                            <button class="btn-action-sm" onclick="openEditModal(${item.originalIndex})">✏️ 수정</button>
+                            <button class="btn-action-sm" onclick="deleteExpense(${item.originalIndex})">🗑️ 삭제</button>
+                        </div>
+                    </div>
+                `;
+                todayList.appendChild(li);
+            });
+        }
+    }
+
+    document.getElementById('itemDate').addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        if (!isNaN(selectedDate.getTime())) {
+            syncDashboardToDate(selectedDate);
+        }
+    });
+
+    function openCustomBudgetPrompt() {
+        const currentYM = getDashboardYearMonth();
+        const currentBudget = getCurrentBudget();
+        const input = prompt(`${currentYM} 생활비 목표 금액을 입력하세요.`, currentBudget);
+        
+        if (input !== null) {
+            const newBudget = parseInt(input.trim());
+            if (newBudget && newBudget > 0) {
+                customMonthlyBudgets[currentYM] = newBudget;
+            } else {
+                delete customMonthlyBudgets[currentYM];
+            }
+            localStorage.setItem('customMonthlyBudgets', JSON.stringify(customMonthlyBudgets));
+            updateUI();
+        }
+    }
+
+    function addExpense() {
+        const date = document.getElementById('itemDate').value;
+        const category = document.getElementById('itemCategory').value;
+        const titleInput = document.getElementById('itemTitle');
+        const amountInput = document.getElementById('itemAmount');
+
+        const title = titleInput.value.trim();
+        const amount = parseInt(amountInput.value);
+
+        if (!date || !title || !amount || amount <= 0) {
+            alert('날짜, 사용처, 금액을 올바르게 입력해 주세요.');
+            return;
+        }
+
+        expenses.push({ category, title, amount, date, source: 'normal' });
+        localStorage.setItem('expenses', JSON.stringify(expenses));
+
+        titleInput.value = '';
+        amountInput.value = '';
+
+        updateUI();
+    }
+
+    function openEditModal(index) {
+        editingExpenseIndex = index;
+        const target = expenses[index];
+        if(!target) return;
+
+        document.getElementById('editItemDate').value = target.date;
+        document.getElementById('editItemCategory').value = target.category;
+        document.getElementById('editItemTitle').value = target.title;
+        document.getElementById('editItemAmount').value = target.amount;
+
+        openModal('editExpenseModal');
+    }
+
+    function saveEditedExpense() {
+        if (editingExpenseIndex < 0) return;
+
+        const date = document.getElementById('editItemDate').value;
+        const category = document.getElementById('editItemCategory').value;
+        const title = document.getElementById('editItemTitle').value.trim();
+        const amount = parseInt(document.getElementById('editItemAmount').value);
+
+        if (!date || !title || !amount || amount <= 0) {
+            alert('날짜, 사용처, 금액을 올바르게 입력해 주세요.');
+            return;
+        }
+
+        expenses[editingExpenseIndex].date = date;
+        expenses[editingExpenseIndex].category = category;
+        expenses[editingExpenseIndex].title = title;
+        expenses[editingExpenseIndex].amount = amount;
+
+        localStorage.setItem('expenses', JSON.stringify(expenses));
+        closeModal('editExpenseModal');
+        
+        updateUI();
+        if(document.getElementById('calendarModal').style.display === 'flex') {
+            renderCalendar();
+            selectCalDate(date);
+        }
+    }
+
+    function deleteExpense(index) {
+        if (confirm('이 지출 내역을 삭제하시겠습니까?')) {
+            const deletedDate = expenses[index].date;
+            expenses.splice(index, 1);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            updateUI();
+            if(document.getElementById('calendarModal').style.display === 'flex') {
+                renderCalendar();
+                selectCalDate(deletedDate);
+            }
+        }
+    }
+
+    function filterExpensesByRange(start, end) {
+        return expenses.filter(e => e.date >= start && e.date <= end && categoryBudgetInclusions[e.category] !== false);
+    }
+
+    function downloadCSV() {
+        const start = document.getElementById('dlStartDate').value;
+        const end = document.getElementById('dlEndDate').value;
+
+        if (!start || !end || start > end) {
+            alert('올바른 시작일과 종료일을 지정해주세요.');
+            return;
+        }
+
+        const filtered = filterExpensesByRange(start, end);
+        if (filtered.length === 0) {
+            alert('해당 기간에 기록된 지출 내역이 없습니다.');
+            return;
+        }
+
+        let csvContent = "\uFEFF날짜,카테고리,사용처,금액(원)\n";
+        filtered.forEach(e => {
+            csvContent += `"${e.date}","${e.category}","${e.title.replace(/"/g, '""')}",${e.amount}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `say_v_지출내역_${start}_${end}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function downloadImageCard() {
+        const start = document.getElementById('dlStartDate').value;
+        const end = document.getElementById('dlEndDate').value;
+
+        if (!start || !end || start > end) {
+            alert('올바른 시작일과 종료일을 지정해주세요.');
+            return;
+        }
+
+        const filtered = filterExpensesByRange(start, end);
+        if (filtered.length === 0) {
+            alert('해당 기간에 기록된 지출 내역이 없습니다.');
+            return;
+        }
+
+        const totalSum = filtered.reduce((a, b) => a + b.amount, 0);
+
+        document.getElementById('cardPeriod').innerText = `기간: ${start} ~ ${end}`;
+        document.getElementById('cardCount').innerText = `${filtered.length}건`;
+        document.getElementById('cardTotal').innerText = `${totalSum.toLocaleString()}원`;
+
+        const cardList = document.getElementById('cardHistoryList');
+        cardList.innerHTML = '';
+        filtered.slice(0, 10).forEach(item => {
+            const li = document.createElement('li');
+            li.style.cssText = "display:flex; justify-content:space-between; font-size:0.8rem; border-bottom:1px solid #fce7f3; padding:4px 0;";
+            li.innerHTML = `<span>[${item.date.slice(5)}] ${item.title}</span><strong>-${item.amount.toLocaleString()}원</strong>`;
+            cardList.appendChild(li);
+        });
+
+        if (filtered.length > 10) {
+            const moreLi = document.createElement('li');
+            moreLi.style.cssText = "text-align:center; font-size:0.75rem; color:#b4a0a0; margin-top:4px;";
+            moreLi.innerText = `외 ${filtered.length - 10}건 생략됨`;
+            cardList.appendChild(moreLi);
+        }
+
+        const cardElem = document.getElementById('summaryImageCard');
+        cardElem.style.display = 'flex';
+
+        html2canvas(cardElem, { scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `say_v_리포트_${start}_${end}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            cardElem.style.display = 'none';
+        });
+    }
+
+    function renderDayPickerGrid() {
+        const grid = document.getElementById('dayPickerGrid');
+        grid.innerHTML = '';
+        
+        const targetYM = getDashboardYearMonth();
+        const [year, month] = targetYM.split('-').map(Number);
+
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const lastDate = new Date(year, month, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            grid.appendChild(emptyCell);
+        }
+
+        for (let d = 1; d <= lastDate; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-picker-cell-cal';
+            if (selectedFixedDay === d) {
+                cell.classList.add('selected');
+            }
+            cell.innerText = d;
+            cell.onclick = () => selectDayFromPicker(d);
+            grid.appendChild(cell);
+        }
+    }
+
+    function renderEditDayPickerGrid() {
+        const grid = document.getElementById('editDayPickerGrid');
+        grid.innerHTML = '';
+        
+        const targetYM = getDashboardYearMonth();
+        const [year, month] = targetYM.split('-').map(Number);
+
+        const firstDay = new Date(year, month - 1, 1).getDay();
+        const lastDate = new Date(year, month, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) {
+            const emptyCell = document.createElement('div');
+            grid.appendChild(emptyCell);
+        }
+
+        for (let d = 1; d <= lastDate; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'day-picker-cell-cal';
+            if (selectedEditFixedDay === d) {
+                cell.classList.add('selected');
+            }
+            cell.innerText = d;
+            cell.onclick = () => selectEditDayFromPicker(d);
+            grid.appendChild(cell);
+        }
+    }
+
+    function openDayPickerModal() {
+        renderDayPickerGrid();
+        openModal('dayPickerModal');
+    }
+
+    function openEditDayPickerModal() {
+        renderEditDayPickerGrid();
+        openModal('editDayPickerModal');
+    }
+
+    function selectDayFromPicker(day) {
+        selectedFixedDay = day;
+        document.getElementById('fixedDay').value = day;
+        document.getElementById('fixedDayBtnText').innerText = `매월 ${day}일`;
+        closeModal('dayPickerModal');
+    }
+
+    function selectEditDayFromPicker(day) {
+        selectedEditFixedDay = day;
+        document.getElementById('editFixedDay').value = day;
+        document.getElementById('editFixedDayBtnText').innerText = `매월 ${day}일`;
+        closeModal('editDayPickerModal');
+    }
+
+    function toggleFixedInclusionState() {
+        fixedInclusionState = !fixedInclusionState;
+        const btn = document.getElementById('fixedInclusionBtn');
+        if (fixedInclusionState) {
+            btn.style.background = '#fce7f3';
+            btn.style.color = '#db2777';
+            btn.innerText = '🟢 지출 포함';
+        } else {
+            btn.style.background = '#f3f4f6';
+            btn.style.color = '#9ca3af';
+            btn.innerText = '⚪ 지출 제외';
+        }
+    }
+
+    function renderFixedExpenses() {
+        const container = document.getElementById('fixedExpenseList');
+        container.innerHTML = '';
+
+        if (fixedExpenses.length === 0) {
+            container.innerHTML = '<p style="font-size:0.8rem; color:#b4a0a0; text-align:center; padding:6px 0;">등록된 고정 지출이 없습니다.</p>';
+            return;
+        }
+
+        fixedExpenses.forEach((item, idx) => {
+            const isInc = item.includeInBudget !== false;
+            const div = document.createElement('div');
+            div.className = 'fixed-item';
+            div.innerHTML = `
+                <div>
+                    <strong>매월 ${item.day}일</strong> - [${item.category}] ${item.title} 
+                </div>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <span style="font-weight:bold; color:var(--danger);">${item.amount.toLocaleString()}원</span>
+                    <button onclick="toggleExistingFixedInclusion(${idx})" style="background:${isInc ? '#fce7f3' : '#f3f4f6'}; color:${isInc ? '#db2777' : '#9ca3af'}; border:none; padding:3px 6px; border-radius:8px; font-size:0.7rem; font-weight:bold; cursor:pointer;">
+                        ${isInc ? '🟢 포함' : '⚪ 제외'}
+                    </button>
+                    <button class="btn-action-sm" onclick="openEditFixedModal(${idx})">✏️</button>
+                    <button onclick="removeFixedExpense(${idx})" style="background:none; border:none; color:#fb7185; cursor:pointer; font-size:0.8rem;">✕</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function toggleExistingFixedInclusion(idx) {
+        const current = fixedExpenses[idx].includeInBudget !== false;
+        fixedExpenses[idx].includeInBudget = !current;
+        const fixedId = fixedExpenses[idx].id;
+        // 고정지출을 실제 지출로 반영한 기록도 동일한 포함 상태를 유지합니다.
+        expenses.forEach(exp => {
+            if (exp.fixedExpenseId === fixedId) {
+                exp.fixedIncluded = fixedExpenses[idx].includeInBudget;
+            }
+        });
+        localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+        localStorage.setItem('expenses', JSON.stringify(expenses));
+        renderFixedExpenses();
+        updateUI();
+        if (document.getElementById('calendarModal').style.display === 'flex') renderCalendar();
+    }
+
+    function addFixedExpense() {
+        const category = document.getElementById('fixedCategory').value;
+        const title = document.getElementById('fixedTitle').value.trim();
+        const day = parseInt(document.getElementById('fixedDay').value);
+        const amount = parseInt(document.getElementById('fixedAmount').value);
+
+        if (!title || !day || day < 1 || day > 31 || !amount || amount <= 0) {
+            alert('날짜, 사용처, 금액을 정확히 지정해주세요.');
+            return;
+        }
+
+        fixedExpenses.push({ id: generateId(), category, title, day, amount, includeInBudget: fixedInclusionState });
+        localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+
+        document.getElementById('fixedTitle').value = '';
+        document.getElementById('fixedDay').value = '';
+        document.getElementById('fixedAmount').value = '';
+        document.getElementById('fixedDayBtnText').innerText = '날짜 선택';
+        selectedFixedDay = null;
+
+        renderFixedExpenses();
+        updateUI();
+    }
+
+    function openEditFixedModal(idx) {
+        const target = fixedExpenses[idx];
+        if(!target) return;
+
+        document.getElementById('editFixedIndex').value = idx;
+        document.getElementById('editFixedCategory').value = target.category;
+        document.getElementById('editFixedTitle').value = target.title;
+        document.getElementById('editFixedDay').value = target.day;
+        document.getElementById('editFixedDayBtnText').innerText = `매월 ${target.day}일`;
+        document.getElementById('editFixedAmount').value = target.amount;
+        selectedEditFixedDay = target.day;
+
+        openModal('editFixedModal');
+    }
+
+    function saveEditedFixedExpense() {
+        const idx = parseInt(document.getElementById('editFixedIndex').value);
+        if (isNaN(idx) || idx < 0) return;
+
+        const category = document.getElementById('editFixedCategory').value;
+        const title = document.getElementById('editFixedTitle').value.trim();
+        const day = parseInt(document.getElementById('editFixedDay').value);
+        const amount = parseInt(document.getElementById('editFixedAmount').value);
+
+        if (!title || !day || day < 1 || day > 31 || !amount || amount <= 0) {
+            alert('날짜, 사용처, 금액을 정확히 지정해주세요.');
+            return;
+        }
+
+        fixedExpenses[idx].category = category;
+        fixedExpenses[idx].title = title;
+        fixedExpenses[idx].day = day;
+        fixedExpenses[idx].amount = amount;
+
+        const fixedId = fixedExpenses[idx].id || (fixedExpenses[idx].id = generateId());
+        expenses.forEach(exp => {
+            if (exp.fixedExpenseId === fixedId) {
+                exp.category = category;
+                exp.title = title;
+                exp.amount = amount;
+                exp.fixedIncluded = fixedExpenses[idx].includeInBudget !== false;
+            }
+        });
+
+        localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+        localStorage.setItem('expenses', JSON.stringify(expenses));
+        closeModal('editFixedModal');
+
+        renderFixedExpenses();
+        updateUI();
+    }
+
+    function removeFixedExpense(idx) {
+        fixedExpenses.splice(idx, 1);
+        localStorage.setItem('fixedExpenses', JSON.stringify(fixedExpenses));
+        renderFixedExpenses();
+        updateUI();
+    }
+
+    function applyFixedExpensesToCurrentMonth(isManual = false) {
+        if (fixedExpenses.length === 0) {
+            if (isManual) alert('등록된 고정 지출 항목이 없습니다.');
+            return;
+        }
+
+        const targetYM = getDashboardYearMonth();
+        const [year, month] = targetYM.split('-').map(Number);
+        
+        const lastDayOfTargetMonth = new Date(year, month, 0).getDate();
+        let addedCount = 0;
+
+        fixedExpenses.forEach(item => {
+            const actualDay = Math.min(item.day, lastDayOfTargetMonth);
+            const dayStr = String(actualDay).padStart(2, '0');
+            const targetDate = `${targetYM}-${dayStr}`;
+
+            const exists = expenses.some(e => e.date === targetDate && e.title === item.title && e.amount === item.amount);
+            if (!exists) {
+                expenses.push({
+                    id: generateId(),
+                    category: item.category,
+                    title: item.title,
+                    amount: item.amount,
+                    date: targetDate,
+                    source: 'fixed',
+                    fixedExpenseId: item.id,
+                    fixedIncluded: item.includeInBudget !== false
+                });
+                addedCount++;
+            }
+        });
+
+        if (addedCount > 0) {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            updateUI();
+            if (isManual) alert(`${addedCount}건의 고정 지출 항목이 이번 달 지출 내역에 반영되었습니다.`);
+        } else {
+            if (isManual) alert('이미 이번 달 지출에 모든 고정 항목이 추가되어 있습니다.');
+        }
+    }
+
+    function renderCalendar() {
+        const year = currentCalDate.getFullYear();
+        const month = currentCalDate.getMonth();
+        const yearMonthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
+
+        document.getElementById('calMonthTitle').innerText = `${year}년 ${month + 1}월`;
+
+        const now = new Date();
+        const btnCalNext = document.getElementById('btnCalNextMonth');
+        if (year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth())) {
+            btnCalNext.style.visibility = 'visible';
+        } else {
+            btnCalNext.style.visibility = 'hidden';
+        }
+
+        // [수정 완료] 지출 포함 설정 엄격 반영 (토글 꺼진 항목 제외)
+        const monthExpenses = getIncludedExpenses(expenses.filter(e => e.date.startsWith(yearMonthPrefix)));
+        const monthTotalSpent = monthExpenses.reduce((sum, item) => sum + item.amount, 0);
+        document.getElementById('calMonthTotalSum').innerText = `월 총 지출: -${monthTotalSpent.toLocaleString()}원`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDate = new Date(year, month + 1, 0).getDate();
+
+        const cells = document.getElementById('calendarCells');
+        cells.innerHTML = '';
+
+        for (let i = 0; i < firstDay; i++) {
+            const div = document.createElement('div');
+            cells.appendChild(div);
+        }
+
+        for (let d = 1; d <= lastDate; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            const dayExpenses = getIncludedExpenses(expenses.filter(e => String(e.date).trim() === dateStr));
+            const sum = dayExpenses.reduce((a, b) => a + Number(b.amount), 0);
+
+            const cell = document.createElement('div');
+            cell.className = 'cal-cell';
+            cell.onclick = () => selectCalDate(dateStr, cell);
+
+            let sumText = sum > 0 ? `-${sum.toLocaleString()}` : '';
+
+            cell.innerHTML = `
+                <div class="num">${d}</div>
+                <div class="sum">${sumText}</div>
+            `;
+            cells.appendChild(cell);
+            fitCalendarAmountText(cell.querySelector('.sum'));
+        }
+    }
+
+    function changeCalMonth(delta) {
+        const now = new Date();
+        const nextDate = new Date(currentCalDate.getFullYear(), currentCalDate.getMonth() + delta, 1);
+        
+        if (nextDate.getFullYear() > now.getFullYear() || 
+           (nextDate.getFullYear() === now.getFullYear() && nextDate.getMonth() > now.getMonth())) {
+            return;
+        }
+
+        currentCalDate = nextDate;
+        renderCalendar();
+    }
+
+    function selectCalDate(dateStr, cellElem) {
+        document.querySelectorAll('.cal-cell').forEach(c => c.classList.remove('selected'));
+        if(cellElem) cellElem.classList.add('selected');
+
+        document.getElementById('selectedDateTitle').innerText = `📌 ${dateStr} 사용 내역`;
+        const list = document.getElementById('calDateHistoryList');
+        list.innerHTML = '';
+
+        const filtered = expenses.map((item, index) => ({...item, originalIndex: index}))
+                                 .filter(e => String(e.date).trim() === dateStr);
+
+        if (filtered.length === 0) {
+            list.innerHTML = '<li style="text-align: center; color: #b4a0a0; padding: 10px 0;">지출 내역이 없습니다 ✨</li>';
+        } else {
+            filtered.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                li.innerHTML = `
+                    <div class="item-info">
+                        <div class="title">[${item.category}] ${item.title}</div>
+                        <div class="meta">${item.date}</div>
+                    </div>
+                    <div class="item-right">
+                        <div class="item-amount">-${item.amount.toLocaleString()}원</div>
+                        <div>
+                            <button class="btn-action-sm" onclick="openEditModal(${item.originalIndex})">✏️ 수정</button>
+                            <button class="btn-action-sm" onclick="deleteExpense(${item.originalIndex})">🗑️ 삭제</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        }
+    }
+
+    function setStatsFilter(type) {
+        statsFilter = type;
+        document.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+        if(type==='day') document.getElementById('btnFilterDay').classList.add('active');
+        if(type==='week') document.getElementById('btnFilterWeek').classList.add('active');
+        if(type==='month') document.getElementById('btnFilterMonth').classList.add('active');
+
+        renderCharts();
+    }
+
+    function renderCharts() {
+        const now = new Date();
+        let filteredExpenses = [];
+        let periodLabels = [];
+        let periodAmounts = [];
+
+        const validExpenses = getIncludedExpenses();
+
+        if (statsFilter === 'day') {
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                const dStr = formatDateYMD(d);
+                periodLabels.push(`${d.getMonth() + 1}/${d.getDate()}`);
+                
+                const daySum = validExpenses.filter(e => e.date === dStr).reduce((a, b) => a + b.amount, 0);
+                periodAmounts.push(daySum);
+            }
+            const minDate = new Date(); minDate.setDate(minDate.getDate() - 6);
+            filteredExpenses = validExpenses.filter(e => new Date(e.date) >= minDate);
+
+        } else if (statsFilter === 'week') {
+            for (let i = 3; i >= 0; i--) {
+                periodLabels.push(`${4-i}주 전`);
+                const wStart = new Date(); wStart.setDate(wStart.getDate() - (i + 1) * 7);
+                const wEnd = new Date(); wEnd.setDate(wEnd.getDate() - i * 7);
+
+                const weekSum = validExpenses.filter(e => {
+                    const ed = new Date(e.date);
+                    return ed >= wStart && ed < wEnd;
+                }).reduce((a, b) => a + b.amount, 0);
+
+                periodAmounts.push(weekSum);
+            }
+            const minDate = new Date(); minDate.setDate(minDate.getDate() - 28);
+            filteredExpenses = validExpenses.filter(e => new Date(e.date) >= minDate);
+
+        } else {
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+                const ymStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                periodLabels.push(`${d.getMonth() + 1}월`);
+
+                const mSum = validExpenses.filter(e => e.date.startsWith(ymStr)).reduce((a, b) => a + b.amount, 0);
+                periodAmounts.push(mSum);
+            }
+            const curYM = getDashboardYearMonth();
+            filteredExpenses = validExpenses.filter(e => e.date.startsWith(curYM));
+        }
+
+        const ctxP = document.getElementById('periodChart').getContext('2d');
+        if (periodChartInstance) periodChartInstance.destroy();
+        periodChartInstance = new Chart(ctxP, {
+            type: 'bar',
+            data: {
+                labels: periodLabels,
+                datasets: [{ label: '지출 금액', data: periodAmounts, backgroundColor: '#f472b6', borderRadius: 8 }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: `지출 추이 (${statsFilter.toUpperCase()})` } } }
+        });
+
+        const categoryTotals = {};
+        filteredExpenses.forEach(e => {
+            categoryTotals[e.category] = (categoryTotals[e.category] || 0) + e.amount;
+        });
+
+        const catLabels = Object.keys(categoryTotals);
+        const catData = Object.values(categoryTotals);
+        
+        const chartColors = catLabels.map((cat, idx) => categoryColors[cat] || defaultPalette[idx % defaultPalette.length]);
+
+        const ctxC = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChartInstance) categoryChartInstance.destroy();
+        categoryChartInstance = new Chart(ctxC, {
+            type: 'pie',
+            data: {
+                labels: catLabels.length ? catLabels : ['내역 없음'],
+                datasets: [{
+                    data: catData.length ? catData : [1],
+                    backgroundColor: catLabels.length ? chartColors : ['#e5e7eb']
+                }]
+            },
+            options: { responsive: true, plugins: { title: { display: true, text: `카테고리 비율 (${statsFilter.toUpperCase()})` } } }
+        });
+    }
+
+    function openModal(id) {
+        document.getElementById(id).style.display = 'flex';
+        if (id === 'budgetModal') {
+            document.getElementById('newBudgetInput').value = defaultMonthlyBudget;
+            renderCategoryOptions();
+            renderFixedExpenses();
+        } else if (id === 'calendarModal') {
+            currentCalDate = new Date(dashboardDate.getFullYear(), dashboardDate.getMonth(), 1);
+            renderCalendar();
+            selectCalDate(getTodayYMD());
+        } else if (id === 'statsModal') {
+            renderCharts();
+        }
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).style.display = 'none';
+    }
+
+    function saveBudget() {
+        const newBudget = parseInt(document.getElementById('newBudgetInput').value);
+        if (newBudget && newBudget > 0) {
+            defaultMonthlyBudget = newBudget;
+            localStorage.setItem('monthlyBudget', defaultMonthlyBudget);
+            updateUI();
+            alert('목표 생활비가 변경되었습니다.');
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
