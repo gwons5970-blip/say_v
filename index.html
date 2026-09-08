@@ -1013,6 +1013,77 @@
         }
 
     </style>
+
+<style>
+/* ===== Safari / iPhone 모달 세로 화면 보정 ===== */
+html, body { min-height: 100%; }
+body { overflow-x: hidden; }
+
+@media (max-width: 600px) {
+    /* iOS Safari의 주소창 때문에 100vh가 실제 보이는 화면보다 커지는 문제 방지 */
+    .modal {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        box-sizing: border-box;
+        padding: max(10px, env(safe-area-inset-top))
+                 10px
+                 max(10px, env(safe-area-inset-bottom));
+        align-items: flex-start;
+        justify-content: center;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .modal-content {
+        box-sizing: border-box;
+        width: min(440px, calc(100vw - 20px));
+        max-width: 440px;
+        max-height: calc(100dvh - max(20px, env(safe-area-inset-top) + env(safe-area-inset-bottom) + 20px));
+        margin: 0 auto;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+    }
+
+    /* 설정처럼 내용이 긴 모달은 위쪽부터 안정적으로 시작 */
+    #budgetModal,
+    #statsModal,
+    #exportModal,
+    #calendarModal,
+    #editExpenseModal {
+        align-items: flex-start;
+    }
+
+    #budgetModal .modal-content {
+        max-height: calc(100dvh - max(20px, env(safe-area-inset-top) + env(safe-area-inset-bottom) + 20px));
+    }
+
+    .modal-header {
+        position: sticky;
+        top: -18px;
+        z-index: 5;
+        background: #fff;
+        padding-top: 2px;
+        padding-bottom: 8px;
+    }
+}
+
+@supports not (height: 100dvh) {
+    @media (max-width: 600px) {
+        .modal { height: 100vh; }
+        .modal-content { max-height: calc(100vh - 20px); }
+    }
+}
+
+/* Safari에서 body와 모달이 동시에 움직이는 현상 방지 */
+body.modal-open { overflow: hidden; }
+</style>
+
 </head>
 <body>
 
@@ -2351,6 +2422,7 @@
     }
 
     function openModal(id) {
+        document.body.classList.add('modal-open');
         document.getElementById(id).style.display = 'flex';
         if (id === 'budgetModal') {
             document.getElementById('newBudgetInput').value = defaultMonthlyBudget;
@@ -2367,6 +2439,8 @@
 
     function closeModal(id) {
         document.getElementById(id).style.display = 'none';
+        const anyOpen = Array.from(document.querySelectorAll('.modal')).some(m => getComputedStyle(m).display === 'flex');
+        if (!anyOpen) document.body.classList.remove('modal-open');
     }
 
     function saveBudget() {
