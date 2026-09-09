@@ -1012,6 +1012,31 @@
             }
         }
 
+
+        /* ===== 생활비 이월 / 절약 목표 카드 ===== */
+        .carry-notice {
+            margin-top: 10px;
+            padding-top: 9px;
+            border-top: 1px solid rgba(255,255,255,0.28);
+            font-size: 0.78rem;
+            line-height: 1.45;
+            opacity: 0.95;
+            display: none;
+        }
+        .saving-goal-card {
+            background: #ffffff;
+            border: 1px solid #fbcfe8;
+            border-radius: 18px;
+            padding: 15px 16px;
+            box-shadow: 0 4px 15px rgba(251, 207, 232, 0.18);
+        }
+        .saving-goal-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+        .saving-goal-label { font-size:0.82rem; color:#9d174d; font-weight:700; }
+        .saving-goal-amount { margin-top:4px; font-size:1.35rem; color:#db2777; font-weight:800; }
+        .saving-goal-sub { margin-top:6px; font-size:0.78rem; color:var(--text-sub); line-height:1.4; }
+        .saving-goal-progress-bg { margin-top:10px; height:8px; border-radius:999px; background:#fce7f3; overflow:hidden; display:none; }
+        .saving-goal-progress-fill { height:100%; width:0%; border-radius:999px; background:#f472b6; transition:width .35s ease; }
+
     </style>
 
 <style>
@@ -1123,12 +1148,28 @@ body.modal-open { overflow: hidden; }
             <span>목표 생활비: <strong id="totalBudget">0원</strong></span>
             <span>사용: <strong id="totalSpent">0원</strong></span>
         </div>
+        <div class="carry-notice" id="carryNotice"></div>
     </div>
 
     <!-- 하루 권장 지출 안내 -->
     <div class="daily-tip-card">
         <span>💡 하루 권장 지출액</span>
         <strong id="dailyRecommended">0원</strong>
+    </div>
+
+    <!-- 누적 절약 / 위시리스트 -->
+    <div class="saving-goal-card" id="savingGoalCard">
+        <div class="saving-goal-top">
+            <div>
+                <div class="saving-goal-label" id="savingGoalLabel">지금까지 아낀 생활비</div>
+                <div class="saving-goal-amount" id="savingGoalAmount">0원</div>
+            </div>
+            <span id="savingGoalPercent" style="font-size:0.8rem; font-weight:800; color:#db2777;"></span>
+        </div>
+        <div class="saving-goal-progress-bg" id="savingGoalProgressBg">
+            <div class="saving-goal-progress-fill" id="savingGoalProgress"></div>
+        </div>
+        <div class="saving-goal-sub" id="savingGoalSub">남은 생활비가 생기면 여기에 차곡차곡 표시돼요 ✨</div>
     </div>
 
     <!-- 지출 기록하기 -->
@@ -1208,13 +1249,13 @@ body.modal-open { overflow: hidden; }
             <button class="btn-close" onclick="closeModal('budgetModal')">✕</button>
         </div>
         
-        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">월 생활비 목표 (예: 400000)</p>
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">월 생활비</p>
         <div class="form-row" style="margin-bottom: 16px;">
             <input type="number" id="newBudgetInput" step="1000" placeholder="예: 400000" onkeydown="if(event.key==='Enter') saveBudget()">
             <button class="btn-submit" onclick="saveBudget()" style="width: 80px; margin: 0;">저장</button>
         </div>
 
-        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; color:#831843;">카테고리 지출 포함 여부 및 색상 설정</p>
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; color:#831843;">카테고리</p>
         <div class="tag-list" id="categoryTagList"></div>
         <div class="form-row" style="margin-bottom: 16px;">
             <input type="text" id="newCategoryInput" placeholder="새 항목 추가" onkeydown="if(event.key==='Enter') addCategory()">
@@ -1223,7 +1264,7 @@ body.modal-open { overflow: hidden; }
 
         <hr style="border:0; border-top:1px dashed #fbcfe8; margin: 12px 0;">
 
-        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">고정 지출 설정 (미리 차감될 항목)</p>
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">고정 지출</p>
         <div id="fixedExpenseList" style="margin-bottom: 8px;"></div>
         
         <div class="form-row">
@@ -1244,6 +1285,19 @@ body.modal-open { overflow: hidden; }
             <button class="btn-submit" onclick="addFixedExpense()" style="width: 80px; margin: 0;">등록</button>
         </div>
         <button class="btn-submit" onclick="applyFixedExpensesToCurrentMonth(true)" style="background: linear-gradient(135deg, #f472b6, #fb7185); margin-top:6px;">이번 달 고정지출 반영하기</button>
+
+        <hr style="border:0; border-top:1px dashed #fbcfe8; margin: 12px 0;">
+
+        <p style="font-size: 0.85rem; font-weight: bold; margin-bottom: 6px; color:#831843;">위시리스트</p>
+        <div class="form-row">
+            <input type="text" id="savingGoalName" placeholder="예: 에어팟" style="flex:1.2;">
+            <input type="number" id="savingGoalAmountInput" step="1000" placeholder="가격 (예: 300000)" style="flex:1;">
+        </div>
+        <div class="form-row" style="margin-bottom:16px;">
+            <button class="btn-submit" onclick="saveSavingGoal()" style="margin:0;">목표 저장</button>
+            <button class="picker-btn" onclick="clearSavingGoal()" style="justify-content:center; width:92px; flex:0 0 92px;">목표 해제</button>
+        </div>
+        <p style="font-size:0.75rem; color:var(--text-sub); margin-top:-8px; margin-bottom:12px; line-height:1.45;">목표를 설정하면 목표를 달성할 때까지 그대로 유지되며, 100% 달성 후 ‘사러가기’를 누르면 구매 금액을 제외한 누적 절약액으로 다시 표시됩니다.</p>
     </div>
 </div>
 
@@ -1395,17 +1449,57 @@ body.modal-open { overflow: hidden; }
 </div>
 
 <script>
+    function safeJSONParse(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            if (raw === null) return fallback;
+            const parsed = JSON.parse(raw);
+            return parsed ?? fallback;
+        } catch (err) {
+            console.warn(`[say_v] ${key} 저장 데이터가 손상되어 기본값으로 복구합니다.`, err);
+            return fallback;
+        }
+    }
+
     let defaultMonthlyBudget = localStorage.getItem('monthlyBudget') ? parseInt(localStorage.getItem('monthlyBudget')) : 400000;
-    let customMonthlyBudgets = localStorage.getItem('customMonthlyBudgets') ? JSON.parse(localStorage.getItem('customMonthlyBudgets')) : {};
-    let expenses = localStorage.getItem('expenses') ? JSON.parse(localStorage.getItem('expenses')) : [];
-    let fixedExpenses = localStorage.getItem('fixedExpenses') ? JSON.parse(localStorage.getItem('fixedExpenses')) : [];
+    if (!Number.isFinite(defaultMonthlyBudget) || defaultMonthlyBudget <= 0) defaultMonthlyBudget = 400000;
+    let customMonthlyBudgets = safeJSONParse('customMonthlyBudgets', {});
+
+    // 월 생활비 목표 변경 이력: 변경한 달부터 앞으로만 적용합니다.
+    // 기존 사용자 데이터는 이전 목표 금액을 모든 과거 월에 적용하는 것으로 시작합니다.
+    let monthlyBudgetHistory = safeJSONParse('monthlyBudgetHistory', [{ effectiveFrom: '0000-01', amount: defaultMonthlyBudget }]);
+    if (!Array.isArray(monthlyBudgetHistory) || monthlyBudgetHistory.length === 0) {
+        monthlyBudgetHistory = [{ effectiveFrom: '0000-01', amount: defaultMonthlyBudget }];
+    }
+    monthlyBudgetHistory = monthlyBudgetHistory
+        .filter(item => item && item.effectiveFrom && Number(item.amount) > 0)
+        .map(item => ({ effectiveFrom: String(item.effectiveFrom).slice(0, 7), amount: Number(item.amount) }))
+        .sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
+    if (monthlyBudgetHistory.length === 0) {
+        monthlyBudgetHistory = [{ effectiveFrom: '0000-01', amount: defaultMonthlyBudget }];
+    }
+    localStorage.setItem('monthlyBudgetHistory', JSON.stringify(monthlyBudgetHistory));
+    let expenses = safeJSONParse('expenses', []);
+    if (!Array.isArray(expenses)) expenses = [];
+    let fixedExpenses = safeJSONParse('fixedExpenses', []);
+    if (!Array.isArray(fixedExpenses)) fixedExpenses = [];
     
-    let categories = localStorage.getItem('categories') ? JSON.parse(localStorage.getItem('categories')) : 
-        ['🍰 식비', '🛒 생필품', '☕ 카페', '🚌 교통', '🛍️ 쇼핑', '🎬 문화', '✨ 기타', '🏠 고정비'];
+    let categories = safeJSONParse('categories', ['🍰 식비', '🛒 생필품', '☕ 카페', '🚌 교통', '🛍️ 쇼핑', '🎬 문화', '✨ 기타', '🏠 고정비']);
+    if (!Array.isArray(categories) || categories.length === 0) categories = ['✨ 기타'];
 
     const defaultPalette = ['#f472b6', '#fb7185', '#38bdf8', '#34d399', '#fbbf24', '#a78bfa', '#f43f5e', '#9ca3af', '#fb923c', '#4ade80'];
-    let categoryColors = localStorage.getItem('categoryColors') ? JSON.parse(localStorage.getItem('categoryColors')) : {};
-    let categoryBudgetInclusions = localStorage.getItem('categoryBudgetInclusions') ? JSON.parse(localStorage.getItem('categoryBudgetInclusions')) : {};
+    let categoryColors = safeJSONParse('categoryColors', {});
+    let categoryBudgetInclusions = safeJSONParse('categoryBudgetInclusions', {});
+    let savingGoal = safeJSONParse('savingGoal', null);
+    let savingGoalPurchasedTotal = Number(localStorage.getItem('savingGoalPurchasedTotal') || 0);
+    if (!Number.isFinite(savingGoalPurchasedTotal) || savingGoalPurchasedTotal < 0) savingGoalPurchasedTotal = 0;
+    if (!savingGoal || typeof savingGoal !== 'object' || !savingGoal.name || !(Number(savingGoal.amount) > 0)) savingGoal = null;
+    const existingExpenseYMs = expenses.map(e => String(e.date || '').slice(0, 7)).filter(ym => /^\d{4}-\d{2}$/.test(ym)).sort();
+    const realNow = new Date();
+    const realCurrentYM = `${realNow.getFullYear()}-${String(realNow.getMonth() + 1).padStart(2, '0')}`;
+    let savingsTrackingStartYM = localStorage.getItem('savingsTrackingStartYM') || existingExpenseYMs[0] || realCurrentYM;
+    if (!/^\d{4}-\d{2}$/.test(savingsTrackingStartYM)) savingsTrackingStartYM = realCurrentYM;
+    localStorage.setItem('savingsTrackingStartYM', savingsTrackingStartYM);
 
     categories.forEach((cat, idx) => {
         if (!categoryColors[cat]) {
@@ -1518,9 +1612,146 @@ body.modal-open { overflow: hidden; }
         return `${dashboardDate.getFullYear()}-${String(dashboardDate.getMonth() + 1).padStart(2, '0')}`;
     }
 
+    function getConfiguredBudget(ym) {
+        if (customMonthlyBudgets[ym]) {
+            return Number(customMonthlyBudgets[ym]);
+        }
+
+        let budget = defaultMonthlyBudget;
+        for (const item of monthlyBudgetHistory) {
+            if (item.effectiveFrom <= ym) {
+                budget = Number(item.amount);
+            } else {
+                break;
+            }
+        }
+        return budget;
+    }
+
     function getCurrentBudget() {
-        const currentYM = getDashboardYearMonth();
-        return customMonthlyBudgets[currentYM] ? customMonthlyBudgets[currentYM] : defaultMonthlyBudget;
+        return getConfiguredBudget(getDashboardYearMonth());
+    }
+
+    function getMonthSpent(ym) {
+        return getIncludedExpenses(expenses.filter(e => String(e.date || '').startsWith(ym)))
+            .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+    }
+
+    function addMonthsToYM(ym, delta) {
+        const [y, m] = ym.split('-').map(Number);
+        const d = new Date(y, m - 1 + delta, 1);
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    function getSavingsTrackingStartYM() {
+        return savingsTrackingStartYM;
+    }
+
+    // 전월 초과분은 다음 달 생활비에서 차감하고, 남은 금액은 누적 절약액으로 계산합니다.
+    function calculateBudgetLedger(targetYM) {
+        let ym = getSavingsTrackingStartYM();
+        if (targetYM < ym) {
+            const configured = getConfiguredBudget(targetYM);
+            const spent = getMonthSpent(targetYM);
+            return { configuredBudget: configured, carryIn: 0, effectiveBudget: configured, spent, remaining: configured - spent, carryOut: Math.max(spent - configured, 0), cumulativeSavings: Math.max(configured - spent, 0) };
+        }
+
+        let carryDebt = 0;
+        let cumulativeSavings = 0;
+        let guard = 0;
+        let result = null;
+        while (ym <= targetYM && guard < 1200) {
+            const configuredBudget = getConfiguredBudget(ym);
+            const carryIn = carryDebt;
+            const effectiveBudget = Math.max(configuredBudget - carryIn, 0);
+            const spent = getMonthSpent(ym);
+            const balanceAfterDebtAndSpending = configuredBudget - carryIn - spent;
+            const monthSaving = Math.max(balanceAfterDebtAndSpending, 0);
+            carryDebt = Math.max(-balanceAfterDebtAndSpending, 0);
+            cumulativeSavings += monthSaving;
+            result = {
+                ym, configuredBudget, carryIn, effectiveBudget, spent,
+                remaining: effectiveBudget - spent,
+                carryOut: carryDebt, monthSaving, cumulativeSavings
+            };
+            if (ym === targetYM) break;
+            ym = addMonthsToYM(ym, 1);
+            guard++;
+        }
+        return result;
+    }
+
+    function saveSavingGoal() {
+        const name = document.getElementById('savingGoalName').value.trim();
+        const amount = parseInt(document.getElementById('savingGoalAmountInput').value);
+        if (!name || !amount || amount <= 0) {
+            alert('사고 싶은 물건 이름과 금액을 정확히 입력해 주세요.');
+            return;
+        }
+        savingGoal = { name, amount };
+        localStorage.setItem('savingGoal', JSON.stringify(savingGoal));
+        updateUI();
+        alert(`${name} 목표를 저장했습니다 ✨`);
+    }
+
+    function buySavingGoal() {
+        if (!savingGoal) return;
+        const ledger = calculateBudgetLedger(getDashboardYearMonth());
+        const saved = Math.max(Number(ledger?.cumulativeSavings || 0) - savingGoalPurchasedTotal, 0);
+        const target = Number(savingGoal.amount);
+        if (saved < target) {
+            alert('아직 목표 금액을 모두 모으지 못했어요.');
+            return;
+        }
+        savingGoalPurchasedTotal += target;
+        localStorage.setItem('savingGoalPurchasedTotal', String(savingGoalPurchasedTotal));
+        const boughtName = savingGoal.name;
+        savingGoal = null;
+        localStorage.removeItem('savingGoal');
+        document.getElementById('savingGoalName').value = '';
+        document.getElementById('savingGoalAmountInput').value = '';
+        updateUI();
+        alert(`${boughtName} 구매 완료! 이제 구매 금액을 제외한 누적 절약액이 표시됩니다 ✨`);
+    }
+
+    function clearSavingGoal() {
+        savingGoal = null;
+        localStorage.removeItem('savingGoal');
+        document.getElementById('savingGoalName').value = '';
+        document.getElementById('savingGoalAmountInput').value = '';
+        updateUI();
+    }
+
+    function renderSavingGoal(ledger) {
+        const saved = Math.max(Number(ledger?.cumulativeSavings || 0) - savingGoalPurchasedTotal, 0);
+        const label = document.getElementById('savingGoalLabel');
+        const amountEl = document.getElementById('savingGoalAmount');
+        const percentEl = document.getElementById('savingGoalPercent');
+        const subEl = document.getElementById('savingGoalSub');
+        const progressBg = document.getElementById('savingGoalProgressBg');
+        const progress = document.getElementById('savingGoalProgress');
+
+        if (savingGoal) {
+            const target = Number(savingGoal.amount);
+            const remainingGoal = Math.max(target - saved, 0);
+            const percent = target > 0 ? Math.min((saved / target) * 100, 100) : 0;
+            label.textContent = `${savingGoal.name} 사기까지 남은 금액`;
+            amountEl.textContent = `${remainingGoal.toLocaleString()}원`;
+            percentEl.textContent = `${percent.toFixed(1)}%`;
+            subEl.textContent = `${saved.toLocaleString()}원 모았어요 · 목표 ${target.toLocaleString()}원${remainingGoal === 0 ? ' 🎉 목표 달성!' : ''}`;
+            if (remainingGoal === 0) {
+                subEl.innerHTML += '<br><button class="btn-submit" onclick="buySavingGoal()" style="margin-top:10px; width:100%;">🛍️ 사러가기</button>';
+            }
+            progressBg.style.display = 'block';
+            progress.style.width = `${percent}%`;
+        } else {
+            label.textContent = '지금까지 아낀 생활비';
+            amountEl.textContent = `${saved.toLocaleString()}원`;
+            percentEl.textContent = '';
+            subEl.textContent = saved > 0 ? '남은 생활비를 차곡차곡 모은 금액이에요 ✨' : '남은 생활비가 생기면 여기에 차곡차곡 표시돼요 ✨';
+            progressBg.style.display = 'none';
+            progress.style.width = '0%';
+        }
     }
 
     function getTotalFixedExpensesAmount() {
@@ -1697,15 +1928,15 @@ body.modal-open { overflow: hidden; }
             btnReset.style.display = 'inline-block';
         }
 
-        const baseBudget = getCurrentBudget();
-        // 고정지출도 실제 expenses에 기록되는 순간 일반 지출과 동일하게 계산합니다.
-        // 여기서 미리 차감하면 실제 지출과 이중 차감되므로 생활비 목표 자체는 그대로 둡니다.
-        const effectiveBudget = baseBudget;
-
+        const ledger = calculateBudgetLedger(targetYM);
+        const effectiveBudget = ledger.effectiveBudget;
+        const totalSpent = ledger.spent;
+        const remaining = effectiveBudget - totalSpent;
+        const spentPercent = effectiveBudget > 0 ? Math.min(Math.max((totalSpent / effectiveBudget) * 100, 0), 100) : (totalSpent > 0 ? 100 : 0);
         const lastDay = new Date(dashboardDate.getFullYear(), dashboardDate.getMonth() + 1, 0).getDate();
-        
+
         if (isCurrentMonth) {
-            const todayNum = new Date().getDate();
+            const todayNum = now.getDate();
             document.getElementById('dashboardDDay').innerText = (lastDay - todayNum) === 0 ? 'D-DAY' : `D-${lastDay - todayNum}`;
             document.getElementById('budgetLabel').innerText = '이번 달 남은 생활비';
         } else {
@@ -1713,30 +1944,31 @@ body.modal-open { overflow: hidden; }
             document.getElementById('budgetLabel').innerText = '해당 월 남은 생활비';
         }
 
-        const monthExpenses = expenses.filter(e => e.date.startsWith(targetYM));
-        
-        // [수정 완료] 전체 지출 합산 (표시용) - 토글이 꺼진 항목도 포함해서 보여줄지 여부 결정
-        // 사용자가 토글을 껐을 때 '월 총 지출' 및 '남은 생활비'에서 완전히 제외되도록 통일 처리합니다.
-        const budgetIncludedMonthExpenses = getIncludedExpenses(monthExpenses);
-        const totalSpent = budgetIncludedMonthExpenses.reduce((sum, item) => sum + item.amount, 0);
-        const budgetIncludedSpent = totalSpent;
-
-        const remaining = effectiveBudget - budgetIncludedSpent;
-        const spentPercent = effectiveBudget > 0 ? Math.min(Math.max((budgetIncludedSpent / effectiveBudget) * 100, 0), 100) : 0;
-
         document.getElementById('totalBudget').innerText = effectiveBudget.toLocaleString() + '원';
         document.getElementById('totalSpent').innerText = totalSpent.toLocaleString() + '원';
         document.getElementById('remainingBudget').innerText = remaining.toLocaleString() + '원';
         document.getElementById('progressBar').style.width = spentPercent + '%';
 
-        const remainingDaysCalc = isCurrentMonth ? (lastDay - new Date().getDate() + 1) : lastDay;
+        const carryNotice = document.getElementById('carryNotice');
+        const notices = [];
+        if (ledger.carryIn > 0) notices.push(`↘ 전월 초과분 ${ledger.carryIn.toLocaleString()}원 자동 차감됨`);
+        if (ledger.carryOut > 0) notices.push(`⚠️ ${ledger.carryOut.toLocaleString()}원 초과 → 다음 달 생활비에서 자동 차감`);
+        if (notices.length) {
+            carryNotice.textContent = notices.join(' · ');
+            carryNotice.style.display = 'block';
+        } else {
+            carryNotice.textContent = '';
+            carryNotice.style.display = 'none';
+        }
+
+        const remainingDaysCalc = isCurrentMonth ? Math.max(lastDay - now.getDate() + 1, 1) : lastDay;
         const dailyRec = remaining > 0 ? Math.floor(remaining / remainingDaysCalc) : 0;
         document.getElementById('dailyRecommended').innerText = dailyRec.toLocaleString() + '원 / 일';
+        renderSavingGoal(ledger);
 
         const selectedInputDate = document.getElementById('itemDate').value || getTodayYMD();
         const btnNextDay = document.getElementById('btnNextDay');
         const btnResetDay = document.getElementById('btnResetDay');
-        
         if (selectedInputDate === getTodayYMD()) {
             btnNextDay.style.display = 'none';
             btnResetDay.style.display = 'none';
@@ -1745,9 +1977,8 @@ body.modal-open { overflow: hidden; }
             btnResetDay.style.display = 'inline-block';
         }
 
-        let filteredListExpenses = expenses.map((item, index) => ({...item, originalIndex: index}))
-                                           .filter(e => e.date === selectedInputDate);
-
+        const filteredListExpenses = expenses.map((item, index) => ({...item, originalIndex: index}))
+            .filter(e => e.date === selectedInputDate);
         document.getElementById('historyListTitle').innerText = `${selectedInputDate} 지출 내역`;
         document.getElementById('todayTotalCount').innerText = `(${filteredListExpenses.length}건)`;
         const todayList = document.getElementById('todayHistoryList');
@@ -1765,13 +1996,12 @@ body.modal-open { overflow: hidden; }
                         <div class="meta">${item.date}</div>
                     </div>
                     <div class="item-right">
-                        <div class="item-amount">-${item.amount.toLocaleString()}원</div>
+                        <div class="item-amount">-${Number(item.amount).toLocaleString()}원</div>
                         <div>
                             <button class="btn-action-sm" onclick="openEditModal(${item.originalIndex})">✏️ 수정</button>
                             <button class="btn-action-sm" onclick="deleteExpense(${item.originalIndex})">🗑️ 삭제</button>
                         </div>
-                    </div>
-                `;
+                    </div>`;
                 todayList.appendChild(li);
             });
         }
@@ -1815,7 +2045,7 @@ body.modal-open { overflow: hidden; }
             return;
         }
 
-        expenses.push({ category, title, amount, date, source: 'normal' });
+        expenses.push({ id: generateId(), category, title, amount, date, source: 'normal' });
         localStorage.setItem('expenses', JSON.stringify(expenses));
 
         titleInput.value = '';
@@ -2200,7 +2430,10 @@ body.modal-open { overflow: hidden; }
             const dayStr = String(actualDay).padStart(2, '0');
             const targetDate = `${targetYM}-${dayStr}`;
 
-            const exists = expenses.some(e => e.date === targetDate && e.title === item.title && e.amount === item.amount);
+            const exists = expenses.some(e =>
+                (e.fixedExpenseId && e.fixedExpenseId === item.id && String(e.date).startsWith(targetYM)) ||
+                (!e.fixedExpenseId && e.date === targetDate && e.title === item.title && Number(e.amount) === Number(item.amount))
+            );
             if (!exists) {
                 expenses.push({
                     id: generateId(),
@@ -2425,7 +2658,11 @@ body.modal-open { overflow: hidden; }
         document.body.classList.add('modal-open');
         document.getElementById(id).style.display = 'flex';
         if (id === 'budgetModal') {
-            document.getElementById('newBudgetInput').value = defaultMonthlyBudget;
+            const now = new Date();
+            const currentRealYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.getElementById('newBudgetInput').value = getConfiguredBudget(currentRealYM);
+            document.getElementById('savingGoalName').value = savingGoal?.name || '';
+            document.getElementById('savingGoalAmountInput').value = savingGoal?.amount || '';
             renderCategoryOptions();
             renderFixedExpenses();
         } else if (id === 'calendarModal') {
@@ -2446,10 +2683,24 @@ body.modal-open { overflow: hidden; }
     function saveBudget() {
         const newBudget = parseInt(document.getElementById('newBudgetInput').value);
         if (newBudget && newBudget > 0) {
+            // 설정을 바꾼 실제 현재 월부터 새로운 목표 금액을 적용합니다.
+            // 따라서 이미 지난 달의 목표 금액은 그대로 유지됩니다.
+            const now = new Date();
+            const effectiveYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+            const existingIndex = monthlyBudgetHistory.findIndex(item => item.effectiveFrom === effectiveYM);
+            if (existingIndex >= 0) {
+                monthlyBudgetHistory[existingIndex].amount = newBudget;
+            } else {
+                monthlyBudgetHistory.push({ effectiveFrom: effectiveYM, amount: newBudget });
+            }
+
+            monthlyBudgetHistory.sort((a, b) => a.effectiveFrom.localeCompare(b.effectiveFrom));
             defaultMonthlyBudget = newBudget;
             localStorage.setItem('monthlyBudget', defaultMonthlyBudget);
+            localStorage.setItem('monthlyBudgetHistory', JSON.stringify(monthlyBudgetHistory));
             updateUI();
-            alert('목표 생활비가 변경되었습니다.');
+            alert(`${effectiveYM}부터 목표 생활비가 ${newBudget.toLocaleString()}원으로 변경되었습니다.`);
         }
     }
 
